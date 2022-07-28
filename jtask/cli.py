@@ -1,10 +1,115 @@
 from pathlib import Path
+from typing import List
 
 import typer
 
 from jtask import __version__, __app_name__, database, config
+from jtask.jtask import TasksController, JTask
 
 app = typer.Typer(name=__app_name__)
+
+
+def get_tasks_conroller() -> TasksController:
+    path = database.get_db_path(config.CONFIG_FILE_PATH)
+    return TasksController(path)
+
+
+@app.command()
+def set_done(
+        task_id: int = typer.Argument(
+            ...,
+            help="Id of the task you want to set done"
+        )
+):
+    tasks_controller = get_tasks_conroller()
+    tasks_controller.set_done(task_id)
+
+
+    typer.secho(
+        f"Tache '{tasks_controller.all_tasks.task_list[task_id-1]['description']}' effectué.",
+        fg=typer.colors.GREEN
+    )
+
+
+@app.command(name="list")
+def list_all():
+    """ List all tasks """
+
+    tasks_controller = get_tasks_conroller()
+    columns = [
+        "ID.  ",
+        "| Priorité  ",
+        "| Catégorie  ",
+        "| Effectué  ",
+        "| Description  ",
+    ]
+    listing_header = "".join(columns)
+
+    typer.secho(listing_header, bold=True)
+
+    typer.secho("-" * len(listing_header), fg=typer.colors.BLUE)
+    for id, task in enumerate(tasks_controller.all_tasks.task_list, 1):
+        desc, category, priority, done = task.values()
+        if done:
+            done = "Oui"
+        else:
+            done = "Non"
+
+        if not category:
+            category = "-"
+
+        typer.secho(
+            f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
+            f"| ({priority}){(len(columns[1]) - len(str(priority)) - 4) * ' '}"
+            f"| {category}{(len(columns[2]) - len(str(category)) - 2) * ' '}"
+            f"| {done}{(len(columns[3]) - len(str(done)) - 2) * ' '}"
+            f"| {desc}",
+            fg=typer.colors.BLUE,
+        )
+    typer.secho("-" * len(listing_header) + "\n", fg=typer.colors.BLUE)
+
+
+@app.command()
+def add(
+        description: List[str] = typer.Argument(
+            ...,
+            help="Task description"
+        ),
+        category: str = typer.Option(
+            "",
+            "--category",
+            "-c",
+            help="The categorie of the task"
+        ),
+        priority: int = typer.Option(
+            3,
+            "--priority",
+            "-p",
+            help="Task priority [1 - 3]",
+            min=1,
+            max=3
+        )
+):
+    """ Add a new task """
+
+    description_text = " ".join(description)
+    if not description_text.endswith("."):
+        description_text += "."
+
+    task = JTask(
+        description=description_text,
+        category=category,
+        priority=priority,
+        done=False
+    )
+
+    tasks_controller = get_tasks_conroller()
+    tasks_controller.add(task.to_dict)
+    typer.secho(
+        f"La tache '{task.description}' a été ajouté"
+        f" avec la priorité {task.priority}.",
+        fg=typer.colors.GREEN
+    )
 
 
 @app.command()
