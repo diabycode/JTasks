@@ -15,18 +15,19 @@ def get_tasks_conroller() -> TasksController:
 
 
 @app.command()
-def set_done(
-        task_id: int = typer.Argument(
-            ...,
-            help="Id of the task you want to set done"
-        )
-):
-    tasks_controller = get_tasks_conroller()
-    tasks_controller.set_done(task_id)
+def set_done(task_id: int = typer.Argument(..., help="Id of the task you want to set done")):
 
+    """ Set a task to done status """
+
+    tasks_controller = get_tasks_conroller()
+    tasks = tasks_controller.get_all_tasks().task_list
+
+    if not tasks_controller.set_done(task_id):
+        typer.secho(f"Tache '{tasks[task_id-1]['description']}' déjà éffectué !", fg=typer.colors.BLUE)
+        raise typer.Exit()
 
     typer.secho(
-        f"Tache '{tasks_controller.all_tasks.task_list[task_id-1]['description']}' effectué.",
+        f"Tache '{tasks[task_id-1]['description']}' effectué.",
         fg=typer.colors.GREEN
     )
 
@@ -36,6 +37,12 @@ def list_all():
     """ List all tasks """
 
     tasks_controller = get_tasks_conroller()
+    db_response = tasks_controller.get_all_tasks()
+    tasks_list = db_response.task_list
+    if not tasks_list:
+        typer.secho("Aucune tache trouvé.", fg=typer.colors.BLUE)
+        raise typer.Exit()
+
     columns = [
         "ID.  ",
         "| Priorité  ",
@@ -48,7 +55,7 @@ def list_all():
     typer.secho(listing_header, bold=True)
 
     typer.secho("-" * len(listing_header), fg=typer.colors.BLUE)
-    for id, task in enumerate(tasks_controller.all_tasks.task_list, 1):
+    for id, task in enumerate(tasks_list, 1):
         desc, category, priority, done = task.values()
         if done:
             done = "Oui"

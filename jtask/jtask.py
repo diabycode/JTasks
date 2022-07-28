@@ -38,12 +38,15 @@ class TasksController:
         read_reponse = self._db_handler.read_tasks()
 
         tasks_list = read_reponse.task_list
+
+        if tasks_list[task_id - 1]["done"] is True:
+            return 0
+
         tasks_list[task_id - 1]["done"] = True
-
         self._db_handler.write_tasks(tasks_list)
+        return 1
 
-    @property
-    def all_tasks(self):
+    def get_all_tasks(self):
         return self._db_handler.read_tasks()
 
 
