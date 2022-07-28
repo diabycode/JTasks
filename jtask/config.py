@@ -3,10 +3,10 @@ from pathlib import Path
 
 import typer
 
-from __init__ import __app_name__
-from database import DEFAULT_DB_FILE_PATH
+from jtask import __app_name__
+from .database import DEFAULT_DB_FILE_PATH
 
-CONFIG_DIR_PATH = Path(typer.get_app_dir(__app_name__))
+CONFIG_DIR_PATH = Path(typer.get_app_dir(__app_name__))  # C:/Users/diaby/AppData/Roaming/jtask/ on windows
 CONFIG_FILE_PATH = CONFIG_DIR_PATH / "config.json"
 
 

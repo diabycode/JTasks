@@ -18,9 +18,9 @@ def init_database(db_path: Path):
 
 if __name__ == "__main__":
     config_file_path = Path("C:/Users/diaby/AppData/Roaming/jtask/config.json")
-    db_path = get_db_path(config_file_path)
+    db = get_db_path(config_file_path)
 
-    init_database(db_path)
-    print(f"database initialized to: {db_path}")
+    init_database(db)
+    print(f"database initialized to: {db}")
 
 
