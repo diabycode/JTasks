@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Tuple, Optional
 
 import typer
 
@@ -32,8 +32,43 @@ def set_done(task_id: int = typer.Argument(..., help="Id of the task you want to
     )
 
 
+def filter_callback(value):
+    if not value:
+        return
+    if value not in ["priority", "category", "done" or "desc"]:
+        typer.secho(
+            f"ERREUR: '{value}' n'est pas une option de filtrage.\n"
+            "  Options: [priority, category, done or desc]",
+            fg=typer.colors.RED
+        )
+        raise typer.Exit()
+    return value
+
+
 @app.command(name="list")
-def list_all():
+def list_all(
+        all_task: bool = typer.Option(
+            False,
+            "--all",
+            "-a",
+            help="List all task (done including)"
+        ),
+        filter_option: str = typer.Option(
+            None,
+            "--filter-by",
+            "-fb",
+            help="filter the task list by their property [priority, category, done or desc]",
+            callback=filter_callback
+        ),
+        reverse_order: bool = typer.Option(
+            False,
+            "--reverse",
+            "-r",
+            help="Reverse listing order"
+        )
+
+
+):
     """ List all tasks """
 
     tasks_controller = get_tasks_conroller()
@@ -42,6 +77,16 @@ def list_all():
     if not tasks_list:
         typer.secho("Aucune tache trouvé.", fg=typer.colors.BLUE)
         raise typer.Exit()
+
+    # filtering
+    if not all_task:
+        tasks_list = filter(lambda t: not t["done"], tasks_list)
+
+    # if filter_option == "priority":
+    #     filter(lambda t: t["priority"], tasks_list)
+
+    if reverse_order:
+        tasks_list.reverse()
 
     columns = [
         "ID.  ",
@@ -52,10 +97,10 @@ def list_all():
     ]
     listing_header = "".join(columns)
 
-    typer.secho(listing_header, bold=True)
-
+    typer.secho("\n__LISTE DE VOS TACHES:\n", bold=True)
+    typer.secho(listing_header)
     typer.secho("-" * len(listing_header), fg=typer.colors.BLUE)
-    for id, task in enumerate(tasks_list, 1):
+    for task_id, task in enumerate(tasks_list, 1):
         desc, category, priority, done = task.values()
         if done:
             done = "Oui"
@@ -66,7 +111,7 @@ def list_all():
             category = "-"
 
         typer.secho(
-            f"{id}{(len(columns[0]) - len(str(id))) * ' '}"
+            f"{task_id}{(len(columns[0]) - len(str(task_id))) * ' '}"
             f"| ({priority}){(len(columns[1]) - len(str(priority)) - 4) * ' '}"
             f"| {category}{(len(columns[2]) - len(str(category)) - 2) * ' '}"
             f"| {done}{(len(columns[3]) - len(str(done)) - 2) * ' '}"
