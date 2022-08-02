@@ -35,10 +35,11 @@ def set_done(task_id: int = typer.Argument(..., help="Id of the task you want to
 def filter_callback(value):
     if not value:
         return
-    if value not in ["priority", "category", "done" or "desc"]:
+    keys_options = ["priority", "category", "state", "desc"]
+    if value not in keys_options:
         typer.secho(
             f"ERREUR: '{value}' n'est pas une option de filtrage.\n"
-            "  Options: [priority, category, done or desc]",
+            f"  Options: {keys_options}",
             fg=typer.colors.RED
         )
         raise typer.Exit()
@@ -53,10 +54,10 @@ def list_all(
             "-a",
             help="List all task (done including)"
         ),
-        filter_option: str = typer.Option(
+        sort_key: str = typer.Option(
             None,
-            "--filter-by",
-            "-fb",
+            "--sort-by",
+            "-sb",
             help="filter the task list by their property [priority, category, done or desc]",
             callback=filter_callback
         ),
@@ -80,10 +81,15 @@ def list_all(
 
     # filtering
     if not all_task:
-        tasks_list = filter(lambda t: not t["done"], tasks_list)
+        tasks_list = list(filter(lambda t: not t["done"], tasks_list))
 
-    # if filter_option == "priority":
-    #     filter(lambda t: t["priority"], tasks_list)
+    # sorting
+    if sort_key == "priority":
+        tasks_list.sort(key=lambda t: t["priority"])
+    elif sort_key == "category":
+        tasks_list.sort(key=lambda t: t["category"])
+    elif sort_key == "state":
+        tasks_list.sort(key=lambda t: t["done"])
 
     if reverse_order:
         tasks_list.reverse()
@@ -98,7 +104,22 @@ def list_all(
     listing_header = "".join(columns)
 
     typer.secho("\n__LISTE DE VOS TACHES:\n", bold=True)
-    typer.secho(listing_header)
+
+    if sort_key:
+        if sort_key == "category":
+            sort_key = "CATEGORIE"
+        elif sort_key == "priority":
+            sort_key = "PRIORITE"
+        else:
+            sort_key = "STATUT"
+        typer.secho(f"trier par: {sort_key}", fg=typer.colors.MAGENTA)
+    else:
+        typer.secho(f"trier par: ENCIENNETE", fg=typer.colors.MAGENTA)
+
+    if reverse_order:
+        typer.secho(f" --affiché dans l'ordre inverse", fg=typer.colors.MAGENTA)
+
+    typer.secho("\n" + listing_header)
     typer.secho("-" * len(listing_header), fg=typer.colors.BLUE)
     for task_id, task in enumerate(tasks_list, 1):
         desc, category, priority, done = task.values()
@@ -109,6 +130,8 @@ def list_all(
 
         if not category:
             category = "-"
+        else:
+            category = category[:8] + "..." if len(category) > 10 else category
 
         typer.secho(
             f"{task_id}{(len(columns[0]) - len(str(task_id))) * ' '}"
