@@ -1,2 +1,2 @@
 # JTasks
-Tasks management CLI applicaion
+Application en ligne de commande (CLI), pour la gestion de taches
