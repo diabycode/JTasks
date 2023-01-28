@@ -16,37 +16,33 @@ def get_tasks_conroller() -> TasksController:
 
 @app.command()
 def set_done(task_id: int = typer.Argument(..., help="Id of the task you want to set done")):
-
     """ Set a task to done status """
 
     tasks_controller = get_tasks_conroller()
     tasks = tasks_controller.get_all_tasks().task_list
 
     if not tasks_controller.set_done(task_id):
-        typer.secho(f"Tache '{tasks[task_id-1]['description']}' déjà éffectué !", fg=typer.colors.BLUE)
+        typer.secho(f"Tache '{tasks[task_id - 1]['description']}' déjà éffectué !", fg=typer.colors.BLUE)
         raise typer.Exit()
 
     typer.secho(
-        f"Tache '{tasks[task_id-1]['description']}' effectué.",
+        f"Tache '{tasks[task_id - 1]['description']}' effectué.",
         fg=typer.colors.GREEN
     )
 
 
-def filter_callback(values):
-    values = (value for value in values if value)
-    if not values:
+def filter_callback(value):
+    if not value:
         return
     keys_options = ["priority", "category", "state", "desc"]
-    
-    for value in values:
-        if value not in keys_options:
-            typer.secho(
-                f"ERREUR: '{value}' n'est pas une option de filtrage.\n"
-                f"  Options: {keys_options}",
-                fg=typer.colors.RED
-            )
-            raise typer.Exit()
-    return values
+    if value not in keys_options:
+        typer.secho(
+            f"ERREUR: '{value}' n'est pas une option de filtrage.\n"
+            f"  Options: {keys_options}",
+            fg=typer.colors.RED
+        )
+        raise typer.Exit()
+    return value
 
 
 @app.command(name="list")
@@ -57,11 +53,12 @@ def list_all(
             "-a",
             help="List all task (done including)"
         ),
-        sort_keys: Tuple[str] = typer.Option(
-            (None),
+        sort_keys: str = typer.Option(
+            None,
             "--sort-by",
             "-sb",
-            help="filter the task list by their property [priority, category, done or desc]. you can sort by max 3 properties",
+            help="filter the task list by their property [priority, category, "
+                 "done or desc]. you can sort by max 3 properties",
             callback=filter_callback
         ),
         reverse_order: bool = typer.Option(
@@ -70,7 +67,6 @@ def list_all(
             "-r",
             help="Reverse listing order"
         )
-
 
 ):
     """ List all tasks """
@@ -87,14 +83,15 @@ def list_all(
         tasks_list = list(filter(lambda t: not t["done"], tasks_list))
 
     # sorting
-    if "priority" in sort_keys:
-        tasks_list.sort(key=lambda t: t["priority"])
-    if "category" in sort_keys:
-        tasks_list.sort(key=lambda t: t["category"])
-    if "state" in sort_keys:
-        tasks_list.sort(key=lambda t: t["done"])
-    if "desc" in sort_keys:
-        tasks_list.sort(key=lambda t: t["description"])
+    if sort_keys:
+        if sort_keys.lower() == "priority":
+            tasks_list.sort(key=lambda t: t["priority"])
+        if sort_keys.lower() == "category":
+            tasks_list.sort(key=lambda t: t["category"])
+        if sort_keys.lower() == "state":
+            tasks_list.sort(key=lambda t: t["done"])
+        if sort_keys.lower() == "desc":
+            tasks_list.sort(key=lambda t: t["description"])
 
     if reverse_order:
         tasks_list.reverse()
@@ -119,7 +116,7 @@ def list_all(
         typer.secho(f" --affiché dans l'ordre inverse", fg=typer.colors.MAGENTA)
 
     typer.secho("\n" + listing_header)
-    typer.secho("-" * len(listing_header), fg=typer.colors.BLUE)
+    typer.secho("-" * len(listing_header))
     for task_id, task in enumerate(tasks_list, 1):
         desc, category, priority, done = task.values()
         if done:
@@ -138,9 +135,9 @@ def list_all(
             f"| {category}{(len(columns[2]) - len(str(category)) - 2) * ' '}"
             f"| {done}{(len(columns[3]) - len(str(done)) - 2) * ' '}"
             f"| {desc}",
-            fg=typer.colors.BLUE,
+            fg=typer.colors.BRIGHT_WHITE,
         )
-    typer.secho("-" * len(listing_header) + "\n", fg=typer.colors.BLUE)
+    typer.secho("-" * len(listing_header) + "\n")
 
 
 @app.command()
@@ -186,6 +183,30 @@ def add(
     )
 
 
+@app.command("delete")
+def delete_task(task_id: str = typer.Argument(..., help="id of the task to delete")):
+    """ Delete a specific task """
+
+    if not task_id.isdigit():
+        typer.secho("ERREUR: Veuillez entrer un identifiant valide.")
+        return None
+
+    controller = get_tasks_conroller()
+    task = controller.get_task(int(task_id))
+    if not task:
+        typer.secho("ERREUR: Veuillez entrer un identifiant valide.")
+        return None
+
+    if typer.confirm(
+        "Voulez-vous vraiment supprimer la tache:\n"
+        f"'{task['description']}' ?",
+    ):
+        controller.delete(int(task_id))
+        typer.secho("Suppression éffectué :)")
+    else:
+        typer.echo("annulé !")
+
+
 @app.command()
 def init(
         db_path: str = typer.Option(
@@ -221,4 +242,3 @@ def main(
         )
 ) -> None:
     return
-

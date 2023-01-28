@@ -34,6 +34,23 @@ class TasksController:
 
         self._db_handler.write_tasks(read_reponse.task_list)
 
+    def delete(self, task_id):
+        read_reponse = self._db_handler.read_tasks()
+        tasks_list = read_reponse.task_list
+        try:
+            task_deleted = tasks_list.pop(task_id - 1)
+        except IndexError:
+            return None
+        self._db_handler.write_tasks(tasks_list)
+        return task_deleted
+
+    def get_task(self, task_id):
+        tasks_list = self._db_handler.read_tasks().task_list
+        try:
+            return tasks_list[task_id - 1]
+        except IndexError:
+            return None
+
     def set_done(self, task_id: int):
         read_reponse = self._db_handler.read_tasks()
 
