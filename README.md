@@ -1,6 +1,7 @@
 # JTasks
 
-![image](https://user-images.githubusercontent.com/97140632/221733880-dffba1fe-5d27-4d70-8e79-68d621f408ab.png)
+![image](https://user-images.githubusercontent.com/97140632/221734612-8cbcc985-c33e-40bd-aedd-7d7cf4bc7540.png)
+
 
 **Jtask** est une CLI app (Application en ligne de commande). 
 Cet mini programme vous servira à gérer vos taches du quotidien plus rapidement et plus efficacement directement dans un terminal sous Windows, Linux, Mac etc…
@@ -66,5 +67,5 @@ Cette commande initialisera les paramètres par défaut de l’app et crée auto
     
 
 >💡 Notez qu’une commande pourrait avoir à lui des sous-commandes et sous-options. N’hésitez pas accéder à l’interface d’aide des commandes en mettant l’option « --help » devant.
->
+
 
